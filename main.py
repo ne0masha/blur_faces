@@ -13,7 +13,7 @@ detector = dlib.get_frontal_face_detector()
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 fps = 24
 
-output_path = 'output_files/output_video.mp4'
+output_path = 'output_files/output_video_5_1.mp4'
 
 width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
