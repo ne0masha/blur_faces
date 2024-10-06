@@ -1,51 +1,59 @@
+import os
 import cv2
 import mediapipe as mp
 
-# Инициализация необходимых модулей MediaPipe
-mp_face_mesh = mp.solutions.face_mesh
-mp_drawing = mp.solutions.drawing_utils
+# Укажите путь к вашему видеофайлу
+video_path = 'input_files/input_video_5.mp4'
+cap = cv2.VideoCapture(video_path)
 
-# Установка параметров видео
-input_video_path = 'input_files/input_video_3.mp4'
-output_video_path = 'output_files/output_video.mp4'
+def process_img(img, face_detection):
 
-# Захват видео
-cap = cv2.VideoCapture(input_video_path)
+    H, W, _ = img.shape
 
-# Получение параметров оригинального видео
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-fps = cap.get(cv2.CAP_PROP_FPS)
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    out = face_detection.process(img_rgb)
 
-# Инициализация VideoWriter для записи выходного видео
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Выбираем кодек
-out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+    if out.detections is not None:
+        for detection in out.detections:
+            location_data = detection.location_data
+            bbox = location_data.relative_bounding_box
 
-# Инициализация Face Mesh
-with mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1) as face_mesh:
-    while cap.isOpened():
+            x1, y1, w, h = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+
+            x1 = int(x1 * W)
+            y1 = int(y1 * H)
+            w = int(w * W)
+            h = int(h * H)
+
+            # print(x1, y1, w, h)
+
+            # blur faces
+            img[y1:y1 + h, x1:x1 + w, :] = cv2.blur(img[y1:y1 + h, x1:x1 + w, :], (30, 30))
+
+    return img
+
+output_dir = 'output_files'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# detect faces
+mp_face_detection = mp.solutions.face_detection
+
+with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+    ret, frame = cap.read()
+
+    output_video = cv2.VideoWriter(os.path.join(output_dir, 'output_video_5.mp4'),
+                                   cv2.VideoWriter_fourcc(*'MP4V'),
+                                   25,
+                                   (frame.shape[1], frame.shape[0]))
+
+    while ret:
+
+        frame = process_img(frame, face_detection)
+
+        output_video.write(frame)
+
         ret, frame = cap.read()
-        if not ret:
-            break
 
-        # Конвертация в RGB
-        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = face_mesh.process(image_rgb)
-
-        # Если обнаружены лица, рисуем на кадре
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
-                mp_drawing.draw_landmarks(frame, face_landmarks, mp_face_mesh.FACEMESH_CONTOURS)
-
-        # Записываем обработанный кадр в выходное видео
-        out.write(frame)
-
-        # # Показ видео (можно убрать или закомментировать)
-        # cv2.imshow('Face Mesh', frame)
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-
-# Освобождение ресурсов
-cap.release()
-out.release()
-cv2.destroyAllWindows()
+    cap.release()
+    output_video.release()
