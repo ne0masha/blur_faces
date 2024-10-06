@@ -3,12 +3,8 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-video_path = 'input_files/input_video_5.mp4'
-cap = cv2.VideoCapture(video_path)
-
 
 def process_img(img, face_detection):
-
     H, W, _ = img.shape
 
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -44,6 +40,10 @@ def process_img(img, face_detection):
             blurred_face = cv2.blur(img, (70, 70))
             img = np.where(mask == 255, blurred_face, img)  # Заменяем область овала на размытое изображение
 
+            # Для отладки: отображаем маску
+            #cv2.imshow("Mask", mask)
+            #cv2.waitKey(1)
+
     return img
 
 
@@ -54,21 +54,26 @@ if not os.path.exists(output_dir):
 # detect faces
 mp_face_detection = mp.solutions.face_detection
 
-with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
-    ret, frame = cap.read()
-
-    output_video = cv2.VideoWriter(os.path.join(output_dir, 'output_video_5.mp4'),
-                                   cv2.VideoWriter_fourcc(*'MP4V'),
-                                   25,
-                                   (frame.shape[1], frame.shape[0]))
-
-    while ret:
-
-        frame = process_img(frame, face_detection)
-
-        output_video.write(frame)
+with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.1) as face_detection:
+    for i in ('1', '2', '3'):
+        video_path = 'input_files/input_video_'+i+'.mp4'
+        cap = cv2.VideoCapture(video_path)
 
         ret, frame = cap.read()
 
-    cap.release()
-    output_video.release()
+        output_video = cv2.VideoWriter(os.path.join(output_dir, 'output_video_'+i+'.mp4'),
+                                       cv2.VideoWriter_fourcc(*'MP4V'),
+                                       25,
+                                       (frame.shape[1], frame.shape[0]))
+
+        while ret:
+
+            frame = process_img(frame, face_detection)
+
+            output_video.write(frame)
+
+            ret, frame = cap.read()
+
+
+        cap.release()
+        output_video.release()
