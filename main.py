@@ -1,10 +1,11 @@
 import os
 import cv2
 import mediapipe as mp
+import numpy as np
 
-# Укажите путь к вашему видеофайлу
 video_path = 'input_files/input_video_5.mp4'
 cap = cv2.VideoCapture(video_path)
+
 
 def process_img(img, face_detection):
 
@@ -18,19 +19,33 @@ def process_img(img, face_detection):
             location_data = detection.location_data
             bbox = location_data.relative_bounding_box
 
-            x1, y1, w, h = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+            x_min, y_min, w, h = bbox.xmin, bbox.ymin, bbox.width, bbox.height
 
-            x1 = int(x1 * W)
-            y1 = int(y1 * H)
+            x_min = int(x_min * W)
+            y_min = int(y_min * H)
             w = int(w * W)
             h = int(h * H)
 
-            # print(x1, y1, w, h)
+            # Увеличиваем высоту размываемого фрагмента на 1/3 для лба
+            additional_height = int(h / 3)
+            y_min = max(0, y_min - additional_height)  # y_min не выходит за пределы изображения
+            h += additional_height  # Увеличиваем высоту
 
-            # blur faces
-            img[y1:y1 + h, x1:x1 + w, :] = cv2.blur(img[y1:y1 + h, x1:x1 + w, :], (30, 30))
+            # Рассчитываем центр и размеры овала
+            center_x = x_min + w // 2
+            center_y = y_min + h // 2
+            axes = (w // 2, h // 2)  # Полуоси овала
+
+            # Создаем маску овала
+            mask = np.zeros_like(img, dtype=np.uint8)
+            cv2.ellipse(mask, (center_x, center_y), axes, 0, 0, 360, (255, 255, 255), -1)  # Белый овал на черном фоне
+
+            # Размываем область, соответствующую овалу
+            blurred_face = cv2.blur(img, (70, 70))
+            img = np.where(mask == 255, blurred_face, img)  # Заменяем область овала на размытое изображение
 
     return img
+
 
 output_dir = 'output_files'
 if not os.path.exists(output_dir):
