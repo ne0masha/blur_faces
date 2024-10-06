@@ -1,64 +1,74 @@
+import os
 import cv2
-import dlib
-import time
+import mediapipe as mp
+import numpy as np
 
-# путь к input video
 video_path = 'input_files/input_video_5.mp4'
-video_capture = cv2.VideoCapture(video_path)
-
-# инициализация детектора лиц
-detector = dlib.get_frontal_face_detector()
-
-# получаем параметры для записи output video
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-fps = 24
-
-output_path = 'output_files/output_video_5_1.mp4'
-
-width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-
-start_time = time.time()  # время начала
-
-while True:
-    # читаем кадры из видео
-    ret, frame = video_capture.read()
-
-    if not ret:
-        break
-
-    # преобразование в монохром
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # обнаружение лиц
-    rects = detector(gray, 0)
-
-    # размываем лица
-    for rect in rects:
-        x_left = rect.left()
-        y_top = rect.top()
-        x_right = rect.right()
-        y_bottom = rect.bottom()
-
-        y_forehead = y_top + int(1/3*(y_top - y_bottom))
-        # размытие области лица
-        face_region = frame[y_forehead:y_bottom, x_left:x_right]
-
-        blurred_face = cv2.GaussianBlur(face_region, (99, 99), 30)
-        frame[y_forehead:y_bottom, x_left:x_right] = blurred_face
-
-    # записываем обработанный кадр в output video
-    out.write(frame)
+cap = cv2.VideoCapture(video_path)
 
 
-# овобождаем ресурсы
-video_capture.release()
-out.release()
-cv2.destroyAllWindows()
+def process_img(img, face_detection):
 
-end_time = time.time()  # время окончания
-processing_time = end_time - start_time  # Рассчитать время обработки
+    H, W, _ = img.shape
 
-cv2.destroyAllWindows()
-print(f"Время обработки видео: {processing_time:.2f} секунд")
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    out = face_detection.process(img_rgb)
+
+    if out.detections is not None:
+        for detection in out.detections:
+            location_data = detection.location_data
+            bbox = location_data.relative_bounding_box
+
+            x_min, y_min, w, h = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+
+            x_min = int(x_min * W)
+            y_min = int(y_min * H)
+            w = int(w * W)
+            h = int(h * H)
+
+            # Увеличиваем высоту размываемого фрагмента на 1/3 для лба
+            additional_height = int(h / 3)
+            y_min = max(0, y_min - additional_height)  # y_min не выходит за пределы изображения
+            h += additional_height  # Увеличиваем высоту
+
+            # Рассчитываем центр и размеры овала
+            center_x = x_min + w // 2
+            center_y = y_min + h // 2
+            axes = (w // 2, h // 2)  # Полуоси овала
+
+            # Создаем маску овала
+            mask = np.zeros_like(img, dtype=np.uint8)
+            cv2.ellipse(mask, (center_x, center_y), axes, 0, 0, 360, (255, 255, 255), -1)  # Белый овал на черном фоне
+
+            # Размываем область, соответствующую овалу
+            blurred_face = cv2.blur(img, (70, 70))
+            img = np.where(mask == 255, blurred_face, img)  # Заменяем область овала на размытое изображение
+
+    return img
+
+
+output_dir = 'output_files'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# detect faces
+mp_face_detection = mp.solutions.face_detection
+
+with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+    ret, frame = cap.read()
+
+    output_video = cv2.VideoWriter(os.path.join(output_dir, 'output_video_5.mp4'),
+                                   cv2.VideoWriter_fourcc(*'MP4V'),
+                                   25,
+                                   (frame.shape[1], frame.shape[0]))
+
+    while ret:
+
+        frame = process_img(frame, face_detection)
+
+        output_video.write(frame)
+
+        ret, frame = cap.read()
+
+    cap.release()
+    output_video.release()
