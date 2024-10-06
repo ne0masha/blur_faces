@@ -36,16 +36,17 @@ while True:
 
     # размываем лица
     for rect in rects:
-        x = rect.left()
-        y = rect.top()
-        x1 = rect.right()
-        y1 = rect.bottom()
+        x_left = rect.left()
+        y_top = rect.top()
+        x_right = rect.right()
+        y_bottom = rect.bottom()
 
+        y_forehead = y_top + int(1/3*(y_top - y_bottom))
         # размытие области лица
-        face_region = frame[y:y1, x:x1]
+        face_region = frame[y_forehead:y_bottom, x_left:x_right]
 
         blurred_face = cv2.GaussianBlur(face_region, (99, 99), 30)
-        frame[y:y1, x:x1] = blurred_face
+        frame[y_forehead:y_bottom, x_left:x_right] = blurred_face
 
     # записываем обработанный кадр в output video
     out.write(frame)
