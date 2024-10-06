@@ -1,64 +1,51 @@
 import cv2
-import dlib
-import time
+import mediapipe as mp
 
-# путь к input video
-video_path = 'input_files/input_video_5.mp4'
-video_capture = cv2.VideoCapture(video_path)
+# Инициализация необходимых модулей MediaPipe
+mp_face_mesh = mp.solutions.face_mesh
+mp_drawing = mp.solutions.drawing_utils
 
-# инициализация детектора лиц
-detector = dlib.get_frontal_face_detector()
+# Установка параметров видео
+input_video_path = 'input_files/input_video_3.mp4'
+output_video_path = 'output_files/output_video.mp4'
 
-# получаем параметры для записи output video
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-fps = 24
+# Захват видео
+cap = cv2.VideoCapture(input_video_path)
 
-output_path = 'output_files/output_video.mp4'
+# Получение параметров оригинального видео
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = cap.get(cv2.CAP_PROP_FPS)
 
-width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+# Инициализация VideoWriter для записи выходного видео
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Выбираем кодек
+out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
 
-start_time = time.time()  # время начала
+# Инициализация Face Mesh
+with mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1) as face_mesh:
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-while True:
-    # читаем кадры из видео
-    ret, frame = video_capture.read()
+        # Конвертация в RGB
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = face_mesh.process(image_rgb)
 
-    if not ret:
-        break
+        # Если обнаружены лица, рисуем на кадре
+        if results.multi_face_landmarks:
+            for face_landmarks in results.multi_face_landmarks:
+                mp_drawing.draw_landmarks(frame, face_landmarks, mp_face_mesh.FACEMESH_CONTOURS)
 
-    # преобразование в монохром
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # Записываем обработанный кадр в выходное видео
+        out.write(frame)
 
-    # обнаружение лиц
-    rects = detector(gray, 0)
+        # # Показ видео (можно убрать или закомментировать)
+        # cv2.imshow('Face Mesh', frame)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
-    # размываем лица
-    for rect in rects:
-        x_left = rect.left()
-        y_top = rect.top()
-        x_right = rect.right()
-        y_bottom = rect.bottom()
-
-        y_forehead = y_top + int(1/3*(y_top - y_bottom))
-        # размытие области лица
-        face_region = frame[y_forehead:y_bottom, x_left:x_right]
-
-        blurred_face = cv2.GaussianBlur(face_region, (99, 99), 30)
-        frame[y_forehead:y_bottom, x_left:x_right] = blurred_face
-
-    # записываем обработанный кадр в output video
-    out.write(frame)
-
-
-# овобождаем ресурсы
-video_capture.release()
+# Освобождение ресурсов
+cap.release()
 out.release()
 cv2.destroyAllWindows()
-
-end_time = time.time()  # время окончания
-processing_time = end_time - start_time  # Рассчитать время обработки
-
-cv2.destroyAllWindows()
-print(f"Время обработки видео: {processing_time:.2f} секунд")
