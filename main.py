@@ -37,24 +37,31 @@ def process_img(img, face_detection):
             cv2.ellipse(mask, (center_x, center_y), axes, 0, 0, 360, (255, 255, 255), -1)  # Белый овал на черном фоне
 
             # Размываем область, соответствующую овалу
-            blurred_face = cv2.blur(img, (70, 70))
+            blurred_face = cv2.GaussianBlur(img, (75, 75),0)
             img = np.where(mask == 255, blurred_face, img)  # Заменяем область овала на размытое изображение
 
     return img
 
 
 def process_video(input_video_path):
-    output_dir = 'output'
+    output_dir = 'outputs'  # Папка для сохранения обработанного видео
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # detect faces
+    # Инициализируем средства детекции лиц
     mp_face_detection = mp.solutions.face_detection
 
     with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.1) as face_detection:
         cap = cv2.VideoCapture(input_video_path)
 
+        # Проверка на корректность открытия видео
+        if not cap.isOpened():
+            raise Exception(f"Ошибка открытия видеофайла: {input_video_path}")
+
         ret, frame = cap.read()
+        if not ret:
+            raise Exception(f"Ошибка чтения первого кадра видео: {input_video_path}")
+
         output_video_path = os.path.join(output_dir, 'output_video.mp4')
         output_video = cv2.VideoWriter(output_video_path,
                                        cv2.VideoWriter_fourcc(*'MP4V'),
@@ -69,4 +76,4 @@ def process_video(input_video_path):
         cap.release()
         output_video.release()
 
-    return output_video_path
+    return output_video_path  # Возвращаем путь к обработанному видео, чтобы app нормально отработал
