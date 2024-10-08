@@ -1,4 +1,4 @@
-from flask import Flask, request, send_from_directory, render_template, Response
+from flask import Flask, request, send_from_directory, render_template, Response, url_for
 import os
 from main import process_video
 
@@ -6,9 +6,9 @@ app = Flask(__name__)
 
 # Папки для сохранения загруженных и обработанных файлов
 UPLOAD_FOLDER = 'uploads'
-PROCESSED_FOLDER = 'outputs'
+OUTPUT_FOLDER = 'outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 
 @app.route('/')
@@ -31,19 +31,23 @@ def upload_file():
     video.save(input_video_path)
 
     # Обрабатываем видео
-    processed_video_path = process_video(input_video_path)
+    processed_video_path = process_video(
+        input_video_path)  # Предполагается, что эта функция возвращает путь к обработанному файлу
 
-    # Возвращаем вторую страницу успешной обработки
-    return f"Video processed successfully: <a href='/outputs/{os.path.basename(processed_video_path)}'>Download Processed Video</a>", 200
+    # Генерируем URL для скачивания обработанного видео
+    video_filename = os.path.basename(processed_video_path)
+    video_url = url_for('output_file', filename=video_filename)
+
+    # Возвращаем страницу успеха
+    return render_template('success.html', video_url=video_url)
 
 
-# Кнопка загрузки видео
 @app.route('/outputs/<filename>')
-def processed_file(filename):
-    response = send_from_directory(PROCESSED_FOLDER, filename, mimetype='video/mp4')
-    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
+def output_file(filename):
+    return send_from_directory(OUTPUT_FOLDER, filename, as_attachment=True)
 
 
 if __name__ == '__main__':
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
     app.run(debug=True)

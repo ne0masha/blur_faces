@@ -1,0 +1,55 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f3f4f6; /* Светлый фон */
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.title {
+    font-size: 36px;
+    color: #333; /* Темный цвет для заголовка */
+    margin-bottom: 20px;
+}
+
+.upload-area {
+    background-color: #fff; /* Белый фон для области загрузки */
+    border: 2px dashed #007bff; /* Синяя рамка */
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.upload-area input[type="file"] {
+    display: none; /* Скрыть стандартный файл */
+}
+
+.upload-area input + label {
+    background-color: #007bff; /* Синий цвет кнопки */
+    color: white;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.upload-area .upload-button {
+    background-color: #28a745; /* Зеленый цвет кнопки */
+    padding: 12px 20px;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.upload-area .upload-button:hover {
+    background-color: #218838; /* Более темный зеленый при наведении */
+}

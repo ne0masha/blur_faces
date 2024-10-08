@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результат обработки видео</title>
+    <style>
+        body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 50px;
+
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding-top: 50px;
+            padding-bottom: 50px;
+            padding-left: 100px;
+            padding-right: 100px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+
+        a.download-button {
+            background-color: #8484e3;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            display: inline-block;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        a.download-button:hover {
+            background-color: #4b4ba6; /* Темнее при наведении */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ваше видео готово!</h1>
+
+    <div class="upload-container">
+        <p>Ваше видео было успешно обработано. Вы можете его скачать.</p>
+        <a href="{{ video_url }}" class="download-button">Скачать видео</a>
+    </div>
+
+</body>
+
+</html>

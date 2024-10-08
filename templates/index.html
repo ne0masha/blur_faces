@@ -1,14 +1,143 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Video</title>
+    <style>
+        body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 50px;
+
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        p {
+            color: #333;
+            margin-top: 50px;
+            text-size: 16px;
+            width: 700px;
+            text-align: center;
+        }
+
+        .upload-container {
+            background-color: #fff; /* Белый фон для области загрузки */
+            border: 2px dashed #007bff; /* Синяя рамка */
+            border-radius: 8px;
+            padding-top: 50px;
+            padding-bottom: 50px;
+            padding-left: 100px;
+            padding-right: 100px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        label {
+            background-color: #8484e3;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        label:hover {
+            background-color: #4b4ba6;
+        }
+
+        input[type="submit"] {
+            background-color: #6c757d;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed; /* Курсор при отключенной кнопке */
+            font-size: 16px;
+            margin-top: 10px;
+            opacity: 0.6; /* Полупрозрачный для отключенной кнопки */
+            transition: background-color 0.3s, opacity 0.3s; /* Плавный переход */
+        }
+
+        input[type="submit"]:hover {
+            cursor: not-allowed;
+        }
+
+        input[type="submit"].active {
+            background-color: #5dad49;
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        input[type="submit"].active:hover {
+            background-color: #2b661d;
+        }
+
+    </style>
 </head>
+
 <body>
-    <h1>Upload Video</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="video" accept="video/*" required>
-        <input type="submit" value="Upload">
-    </form>
+
+    <h1>Размытие лиц на видео</h1>
+
+    <p>Загрузите видео для обработки с компьютера и дождитесь результата. Вы получите видео, на котором размыты все человеческие лица!</p>
+
+    <div class="upload-container">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+
+            <label id="file-label" for="video">Выберите файл</label>
+            <input type="file" id="video" name="video" accept="video/*" required onchange="updateFileName()">
+
+            <input type="submit" id="upload-button" value="Upload" disabled>
+
+        </form>
+    </div>
+
+    <p id="loadingMessage">Пожалуйста, дождитесь полной загрузки, не закрывайте страницу. Это может занять некоторое время.</p>
+
+    <script>
+        function updateFileName() {
+            const fileInput = document.getElementById('video');
+            const fileLabel = document.getElementById('file-label');
+            const uploadButton = document.getElementById('upload-button');
+
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name; // Получаем название файла
+                fileLabel.textContent = fileName; // Обновляем текст на кнопке
+                uploadButton.disabled = false; // Включаем кнопку "Upload"
+                uploadButton.classList.add('active'); // Добавляем класс для активации кнопки
+                uploadButton.style.cursor = 'pointer'; // Устанавливаем нормальный курсор
+            } else {
+                fileLabel.textContent = "Выберите файл"; // Возвращаем текст по умолчанию
+                uploadButton.disabled = true; // Отключаем кнопку "Upload"
+                uploadButton.classList.remove('active'); // Убираем класс для активации кнопки
+                uploadButton.style.cursor = 'not-allowed'; // Возвращаем курсор "недоступен"
+            }
+        }
+
+        // Показываем сообщение при отправке формы
+    document.getElementById('uploadForm').onsubmit = function() {
+        document.getElementById('loadingMessage').style.display = 'block'; // Показываем сообщение
+        return true; // Позволяет отправить форму
+    };
+
+    </script>
 </body>
+
 </html>
