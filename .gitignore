@@ -4,3 +4,4 @@ input_files/
 output_files/
 uploads
 outputs
+__pycache__/
