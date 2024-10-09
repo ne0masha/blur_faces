@@ -5,13 +5,14 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Копируем файл зависимостей в контейнер
-COPY requirements.txt .
+COPY requirements.txt /app
 
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
 # Устанавливаем зависимости
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip -r requirements.txt
 
 # Копируем все файлы в контейнер
-COPY . .
+COPY . /app
 
 # Указываем команду для запуска
-CMD ["python", "main.py"]
+EXPOSE 5000
