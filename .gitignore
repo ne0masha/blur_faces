@@ -5,3 +5,5 @@ output_files/
 uploads
 outputs
 __pycache__/
+app/outputs
+app/uploads
